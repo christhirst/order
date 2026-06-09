@@ -5,3 +5,4 @@ service = "FREEPDB1"
 user = "your_username"
 password = "your_password"
 pool_size = 10
+client_dir = "./instantclient_23_26"

@@ -1,17 +1,13 @@
-use deadpool_oracle::PoolBuilder;
-use oracle_rs::Config;
+use oracle::Connection;
 
 use crate::settings::DatabaseSettings;
 
-/// Builds an Oracle connection pool from the given database settings.
-pub async fn create_pool(
+/// Builds an Oracle connection from the given database settings.
+pub fn connect(
     db: &DatabaseSettings,
-) -> Result<deadpool_oracle::Pool, Box<dyn std::error::Error>> {
-    let config = Config::new(&db.host, db.port, &db.service, &db.user, &db.password);
+) -> Result<Connection, Box<dyn std::error::Error>> {
+    let connect_string = format!("//{}:{}/{}", db.host, db.port, db.service);
+    let conn = Connection::connect(&db.user, &db.password, &connect_string)?;
 
-    let pool = PoolBuilder::new(config)
-        .max_size(db.pool_size)
-        .build()?;
-
-    Ok(pool)
+    Ok(conn)
 }

@@ -4,20 +4,24 @@ mod settings;
 
 use settings::Settings;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = Settings::load()?;
+
+    if let Some(dir) = &settings.database.client_dir {
+        let mut params = oracle::InitParams::new();
+        let _ = params.oracle_client_lib_dir(dir);
+        params.init()?;
+    }
 
     println!(
         "Connecting to Oracle at {}:{}...",
         settings.database.host, settings.database.port
     );
 
-    let pool = db::create_pool(&settings.database).await?;
-    let conn = pool.get().await?;
+    let conn = db::connect(&settings.database)?;
 
     // --- Division mismatch report ---
-    let mismatches = queries::find_division_mismatches(&conn).await?;
+    let mismatches = queries::find_division_mismatches(&conn)?;
 
     if mismatches.is_empty() {
         println!("No division mismatches found.");
@@ -36,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // --- Set usr_prov = 1 ---
-    let updated = queries::set_usr_prov(&conn).await?;
+    let updated = queries::set_usr_prov(&conn)?;
     println!("Updated usr_prov to 1 for {} rows.", updated);
 
     Ok(())
